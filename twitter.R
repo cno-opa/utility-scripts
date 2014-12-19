@@ -14,7 +14,7 @@ library(jsonlite)
 library(RCurl)
 library(ROAuth)
 library(devtools)
-library(twitteR
+library(twitteR)
 
 ## Authenticate the app (include quotations)
 api_key = "[insert here]"
@@ -29,4 +29,3 @@ Tweetsaints<-searchTwitter('Saints',geocode='30.0,-90.0,20mi',n=5000,retryOnRate
 ## Convert and view as data frame
 Saintsdf<-twListToDF(Tweetsaints)
 View(Saintsdf)
-
