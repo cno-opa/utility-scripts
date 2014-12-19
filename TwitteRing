@@ -1,6 +1,6 @@
 ## Script for interfacing with Twitter, via the OPA Analytics app (as of 12/18/2014).
 
-## Install needed, or at least relevant packages
+## Install needed, or at least relevant packages; twitteR installed directly from the twitteR admin's repo.
 install.packages("httr")
 install.packages("jsonlite")
 install.packages("RCurl")
@@ -23,7 +23,7 @@ access_token = "[insert here]"
 access_secret = "[insert here]"
 setup_twitter_oauth(api_key,api_secret,access_token,access_secret)
 
-## Hypothetical tweet search command:
+## Hypothetical tweet search command, searching for the occurence of "Saints", within 20 miles of random NOLA geo-coordinate:
 Tweetsaints<-searchTwitter('Saints',geocode='30.0,-90.0,20mi',n=5000,retryOnRateLimit=1)
 
 ## Convert and view as data frame
