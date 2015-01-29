@@ -13,9 +13,13 @@ Style conventions are important. If your code is consistent, semantic, and conci
 Here are some conventions to follow:
 
 __File names:__ End files with `.R` and keep the names as short as possible, in lowercase, and use hyphens instead of spaces to separate words.
+
 __Naming:__ Use lower camelcase for functions (myFunction) and underscores for object assignment (my_data). Try to limit your names to two words. Do not use periods to separate words.
+
 __Indentation:__ Use two spaces, not tabs.
+
 __Spaces:__ Use spaces around all operators (=, +, -, <-, &, |, and so on).
+
 __Comments:__ Comment functions and other significant sections of your code so folks know what's going on, but be concise. For example:
 
 ```R
@@ -34,7 +38,7 @@ __Layout:__ Think of your script like you would any other document. It's read fr
  * Testing
  * Save your work
 
- __Dragons to avoid:__ Don't do these:
+__Dragons to avoid:__ Don't do these:
 
  * Use `=` instead of `<-`
  * Use `attach()`
