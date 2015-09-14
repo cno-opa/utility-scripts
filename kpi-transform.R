@@ -1,5 +1,5 @@
 # Transforms KPI matrix into format for FME/Open Performance upload
-# Conor Gaffney, 2015
+# Conor Gaffney and Vic Spencer, 2015
 #
 #
 # Desired output format:
@@ -11,8 +11,13 @@
 #
 
 .libPaths("C:\\Rpackages")
-require(gdata)
-require(reshape2)
+library(gdata)
+library(reshape2)
+library(dplyr)
+
+## Set working directory to appropriate ResultsNOLA folder
+kpiDir<-"O:/Projects/ResultsNOLA/2015"
+setwd(kpiDir)
 
 kpi <- read.xls("kpi-matrix.xlsx", header = TRUE, sheet = "Measures", na.strings = c("", "#N/A", "NA", "N/A", "-", " -", "- ", " - ", "#DIV/0!", "REF!"), strip.white = TRUE, perl = "C:/Strawberry/perl/bin/perl.exe")
 historic <- read.xls("kpi-matrix.xlsx", header = TRUE, sheet = "Seasonality-Historic\ Data", na.strings = c("", "#N/A", "NA", "N/A", "-", " -", "- ", " - ", "#DIV/0!", "REF!"), strip.white = TRUE, perl = "C:/Strawberry/perl/bin/perl.exe")
@@ -20,16 +25,20 @@ historic <- read.xls("kpi-matrix.xlsx", header = TRUE, sheet = "Seasonality-Hist
 ## This handles the 2015 sheet
 
 current <- data.frame(IndicatorID  = gsub("-", "0", kpi$Index),
-                     StrategyID   = gsub(".", "0", kpi$Strategic.Alignment..adjust.for.2015., fixed = TRUE),
+                     StrategyID   = gsub(".", "0", kpi$X2015.Strategic.Alignment, fixed = TRUE),
                      Organization = kpi$Org,
                      Name         = kpi$Measure.1,
                      Type         = kpi$Variable.Type,
-                     Q1           = kpi$Q1.Actual,
-                     Q2           = kpi$Q2.Actual,
-                     Q3           = kpi$Q3.Actual,
-                     Q4           = kpi$Q4.Actual)
+                     Q1           = kpi$Q1.Total,
+                     Q2           = kpi$Q2.Total,
+                     Q3           = kpi$Q3.Total,
+                     Q4           = kpi$Q4.Total,
+                     YTD          = kpi$Q2.YTD,
+                     Target       = kpi$X2015.Target,
+                     Seasonality  = kpi$Seasonality,
+                     Direction    = kpi$Direction)
 
-current <-melt(current, id.vars = c("IndicatorID", "StrategyID", "Organization", "Name", "Type"))
+current <-melt(current, id.vars = c("IndicatorID", "StrategyID", "Organization", "Name", "Type","YTD","Target","Seasonality","Direction"))
 
 current$RowID <- row.names(current)
 current$Date <- NA
@@ -65,16 +74,17 @@ for(i in 1:nrow(current)) {
 }
 
 
+# clear
 # current$variable <- NULL
 # current$value <- NULL
 
 ## This handles the historic data sheet
 
 past <- data.frame(IndicatorID  = gsub("-", "0", historic$Index),
-                   StrategyID   = NA,
+                   StrategyID   = gsub(".", "0", historic$X2015.Strategic.Alignment, fixed = TRUE),
                    Organization = historic$Org,
                    Name         = historic$Measure.1,
-                   Type         = NA,
+                   Type         = historic$Variable.Type,
                    X2011_Q1     = historic$X2011.Q1.Actual,
                    X2011_Q2     = historic$X2011.Q2.Actual,
                    X2011_Q3     = historic$X2011.Q3.Actual,
@@ -90,9 +100,13 @@ past <- data.frame(IndicatorID  = gsub("-", "0", historic$Index),
                    X2014_Q1     = historic$X2014.Q1.Actual,
                    X2014_Q2     = historic$X2014.Q2.Actual,
                    X2014_Q3     = historic$X2014.Q3.Actual,
-                   X2014_Q4     = historic$X2014.Q4.Actual)
+                   X2014_Q4     = historic$X2014.Q4.Actual,
+                   Target       = historic$X2015.Target,
+                   YTD          = historic$Q2.YTD,
+                   Seasonality  = historic$Seasonality,
+                   Direction    = historic$Direction)
 
-past <-melt(past, id.vars = c("IndicatorID", "StrategyID", "Organization", "Name", "Type"))
+past <-melt(past, id.vars = c("IndicatorID", "StrategyID", "Organization", "Name", "Type","YTD","Target","Seasonality","Direction"))
 
 past$RowID <- row.names(past)
 past$variable <- as.character(past$variable)
@@ -133,6 +147,29 @@ for(i in 1:nrow(past)) {
 # past$variable <- NULL
 # past$value <- NULL
 
-# save
+# combine current year and historical years into one data frame
 output <- rbind(current, past)
+##output<-merge(current,past,by="IndicatorID",all.x="TRUE")
+##output<-inner_join(current,past,by="IndicatorID")
+
+# Multiply Percent column by 100 to make it readable on OpenGov site, then incorporate new percent values into value column
+class(output$Percent)<-"numeric"
+class(output$value)<-"numeric"
+output$Percent<-round(output$Percent*100,1)
+output$value<-ifelse(!is.na(output$Percent),output$Percent,output$value)
+
+# Concatenate Name and Date columns to replace RowID column
+output$RowID<-paste(output$Name,output$Date,sep="_")
+
+# Remove variable column
+output<-select(output,-variable)
+
+# Create "Action-Aggregation" variable to categorize measures into the appropriate "action" and "aggregation" needed for formatting data for Socrata dashboard
+output$Action_Aggregation<-ifelse(output$Type=="Average" & output$Direction=="Under"|output$Type=="Average Percent" & output$Direction=="Under"|output$Type=="Count" & output$Direction=="Under"|output$Type=="Last" & output$Direction=="Under","Maintain Below",
+                                  ifelse(output$Type=="Count" & output$Direction=="Over"|output$Type=="Last" & output$Direction=="Over","Increase to",
+                                         ifelse(output$Type=="Average" & output$Direction=="Over"|output$Type=="Average Percent" & output$Direction=="Over","Maintain Above","Measure")))
+output$Action_Aggregation<-ifelse(is.na(output$Action_Aggregation),"Measure",output$Action_Aggregation)  ## This codes "Establishing Baseline" or "Management Statistic" measures as "Measure," which the above ifelse does not.
+
+# save
 write.csv(output, file = "kpi-matrix-transformed.csv", row.names = FALSE)
+
