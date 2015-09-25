@@ -2,7 +2,7 @@
 title: "311 Request Closure Times"
 author: "Office of Performance and Accountability"
 date: "September 24, 2015"
-output: pdf_document
+output: html_document
 ---
 
 ```{r, include = FALSE, message = FALSE}
