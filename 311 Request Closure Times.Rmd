@@ -1,4 +1,14 @@
+---
+title: "311 Request Closure Times"
+author: "Office of Performance and Accountability"
+date: "September 24, 2015"
+output: html_document
+---
+
+```{r, include = FALSE, message = FALSE}
 library(dplyr)
+library(ggplot2)
+library(grDevices)
 
 # Read table from OPA shared drive
 data.311 <- read.csv("O:/Projects/QualityofLifeSTAT/311 Closure Times/data.311.csv")
@@ -20,7 +30,9 @@ summary_table <- data.311.clean %>%
   summarise(mean = round(mean(age), 0), median = round(median(age), 0), eightieth = round(quantile(age, .8), 0))
 
 print(as.data.frame(summary_table))
+```
 
+```{r, echo = FALSE, results = "asis"}
 # Create subset for each type of 311 issue
 for (type in levels(data.311.clean$type)) {
   age_by_type <- data.311.clean[data.311.clean$type == type,]
@@ -29,21 +41,35 @@ for (type in levels(data.311.clean$type)) {
   if(length(age_by_type$age) > 0) {
     
     # Define variables to be used in histogram
-    percentile <- round(quantile(age_by_type$age, c(.7, .8, .9), 0))
+    percentile <- round(quantile(age_by_type$age, .8), 0)
     average <- round(mean(age_by_type$age), 0)
     median <- round(median(age_by_type$age), 0)
     
-    # Create histogram of number of days to close for each metric
-    hg <- hist(age_by_type$age, main = type, xlab = "Number of days to close", ylab = "Number of cases")
+    hg <- ggplot(data = age_by_type, aes(x = age)) +
+      geom_histogram(binwidth = 30, fill = "white", colour = "black")
+            
+    hgplot <- hg +
+      geom_vline(xintercept = average, linetype = "dashed", colour = "blue") +
+      geom_vline(xintercept = percentile, linetype = "dashed", colour = "red") +
+      
+      annotate("text", x = average, y = max(ggplot_build(hg)$panel$ranges[[1]]$y.range) * 0.9, label = paste("Avg. =", average), colour = "blue", fontface = "bold") +
+      annotate("text", x = percentile, y = max(ggplot_build(hg)$panel$ranges[[1]]$y.range) * 0.7, label = paste("80th =", percentile), colour = "red", fontface = "bold") +
+            
+      ggtitle(type) +
+      xlab("Number of days to close") +
+      ylab("Number of cases")
     
-    abline(v = percentile[2], col = "red")
-    text(x = percentile[2], y = max(hg$counts) * 0.7, pos = 4, labels = paste("80th %\n=", percentile[2]), col = "red", font = 2)
-    
-    abline(v = average, col = "blue")
-    text(x = average, y = max(hg$counts) * 0.9, pos = 4, labels = paste("Avg.\n=", average), col = "blue", font = 2)
-    
-    # Provide explanation for 311 types with too few cases
+    cat("\n\n\\pagebreak\n")
+    print(hgplot)
+    cat("\n\n\\pagebreak\n")
+
   } else {
-    print(paste(type, "- Not enough cases"))
+    
+    cat("\n\n\\pagebreak\n")
+    paste(type, "Not enough cases")
+    cat("\n\n\\pagebreak\n")
+    
   }
+
 }
+```
