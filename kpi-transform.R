@@ -19,8 +19,9 @@ library(dplyr)
 kpiDir<-"O:/Projects/ResultsNOLA/2015"
 setwd(kpiDir)
 
-kpi <- read.xls("kpi-matrix.xlsx", header = TRUE, sheet = "Measures", na.strings = c("", "#N/A", "NA", "N/A", "-", " -", "- ", " - ", "#DIV/0!", "REF!"), strip.white = TRUE, perl = "C:/Strawberry/perl/bin/perl.exe")
-historic <- read.xls("kpi-matrix.xlsx", header = TRUE, sheet = "Seasonality-Historic\ Data", na.strings = c("", "#N/A", "NA", "N/A", "-", " -", "- ", " - ", "#DIV/0!", "REF!"), strip.white = TRUE, perl = "C:/Strawberry/perl/bin/perl.exe")
+## Read KPI matrix sheets
+kpi <- read.xls("2015 KPI Matrix MASTER", header = TRUE, sheet = "Measures", na.strings = c("", "#N/A", "NA", "N/A", "-", " -", "- ", " - ", "#DIV/0!", "REF!"), strip.white = TRUE, perl = "C:/Strawberry/perl/bin/perl.exe")
+historic <- read.xls("2015 KPI Matrix MASTER", header = TRUE, sheet = "Seasonality-Historic\ Data", na.strings = c("", "#N/A", "NA", "N/A", "-", " -", "- ", " - ", "#DIV/0!", "REF!"), strip.white = TRUE, perl = "C:/Strawberry/perl/bin/perl.exe")
 
 ## This handles the 2015 sheet
 
