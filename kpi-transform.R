@@ -16,8 +16,8 @@ library(reshape2)
 library(dplyr)
 
 ## Read KPI matrix sheets
-kpi <- read.xls("O:/Projects/ResultsNOLA/2015/2015 KPI Matrix MASTER", header = TRUE, sheet = "Measures", na.strings = c("", "#N/A", "NA", "N/A", "-", " -", "- ", " - ", "#DIV/0!", "REF!"), strip.white = TRUE, perl = "C:/Strawberry/perl/bin/perl.exe")
-historic <- read.xls("O:/Projects/ResultsNOLA/2015/2015 KPI Matrix MASTER", header = TRUE, sheet = "Seasonality-Historic\ Data", na.strings = c("", "#N/A", "NA", "N/A", "-", " -", "- ", " - ", "#DIV/0!", "REF!"), strip.white = TRUE, perl = "C:/Strawberry/perl/bin/perl.exe")
+kpi <- read.xls("O:/Projects/ResultsNOLA/2015/2015 KPI Matrix MASTER.xlsx", header = TRUE, sheet = "Measures", na.strings = c("", "#N/A", "NA", "N/A", "-", " -", "- ", " - ", "#DIV/0!", "REF!"), strip.white = TRUE, perl = "C:/Strawberry/perl/bin/perl.exe")
+historic <- read.xls("O:/Projects/ResultsNOLA/2015/2015 KPI Matrix MASTER.xlsx", header = TRUE, sheet = "Seasonality-Historic\ Data", na.strings = c("", "#N/A", "NA", "N/A", "-", " -", "- ", " - ", "#DIV/0!", "REF!"), strip.white = TRUE, perl = "C:/Strawberry/perl/bin/perl.exe")
 
 ## This handles the 2015 sheet
 
@@ -168,5 +168,5 @@ output$Action_Aggregation<-ifelse(output$Type=="Average" & output$Direction=="Un
 output$Action_Aggregation<-ifelse(is.na(output$Action_Aggregation),"Measure",output$Action_Aggregation)  ## This codes "Establishing Baseline" or "Management Statistic" measures as "Measure," which the above ifelse does not.
 
 # save
-write.csv(output, file = "kpi-matrix-transformed.csv", row.names = FALSE)
+write.csv(output, file = "O:/Projects/ResultsNOLA/2015/kpi-matrix-transformed.csv", row.names = FALSE)
 
