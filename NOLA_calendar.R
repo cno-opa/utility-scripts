@@ -5,5 +5,6 @@ NOLA_calendar<-Calendar(holidays=c("2011-1-3","2011-1-17","2011-12-25","2011-11-
                                                 "2014-1-1",	"2014-1-20",	"2014-3-4",	"2014-4-18",	"2014-5-26",	"2014-7-4",	"2014-9-1",	"2014-11-27",	"2014-11-28",	"2014-12-25",	
                                                     "2015-1-1",	"2015-1-19",	"2015-2-17",	"2015-4-3",	"2015-5-25",	"2015-7-3",	"2015-9-7",	"2015-11-26",	"2015-11-27",	"2015-12-25"),
                         start.date="2011-1-1",end.date="2015-12-31",
+                        dib=365,
                         name="NOLA_calendar",
-                        weekdays=c("saturday","sunday")) # weekdays arg actually specifies weekend days
+                        weekdays=c("saturday","sunday"),) # weekdays arg actually specifies weekend days
