@@ -189,9 +189,19 @@ output$RowID<-paste(output$Name,output$Date,sep="_")
 # }
 
 # Create YTD variable to enable goal tile creation for current year
-output$YTD<-ifelse(output$Quarter=="1",output$Q1_YTD,
-                   ifelse(output$Quarter=="2",output$Q2_YTD,
-                          ifelse(output$variable=="Q3",output$Q3_YTD,NA)))
+output$YTD<-ifelse(output$Quarter=="1" & output$Year=="2015",output$Q1_YTD,
+                   ifelse(output$Quarter=="2" & output$Year=="2015",output$Q2_YTD,
+                          ifelse(output$variable=="Q3" & output$Year=="2015",output$Q3_YTD,NA)))
+
+
+## Code YTD percents by 100
+output$YTD<-ifelse(!is.na(output$Percent),output$Percent,output$YTD)
+
+## Add Quarter_Label variable
+output$Quarter_Label<-ifelse(output$Quarter=="1","Q1",
+                                ifelse(output$Quarter=="2","Q2",
+                                  ifelse(output$Quarter=="3","Q3",
+                                    ifelse(output$Quarter=="4","Q4",NA))))
 
 # Remove variable column, as well as any rows without a data point.
 output<-select(output,-variable)%>%
