@@ -1,14 +1,13 @@
-# Transforms KPI matrix into format for FME/Open Performance upload
-# Conor Gaffney and Vic Spencer, 2015
-#
-#
-# Desired output format:
-#
-# | IndicatorID | StrategyID | Organization     | Name                  | Type  | RowID | Date       | Year | Quarter | DateLabel | Total | Percent |  YTD  | Action_Aggregation |
-# | ----------- | ---------- | ---------------- | --------------------- | ----- | ----- | ---------- | ---- | ------- | --------- | ----- | ------- | ----- | ------------------ |
-# | 602         | 40201      | Code Enforcement | Number of Inspections | Count | 1     | mm/dd/yyyy | 2011 | 1       | 2011, Q1  | 7030  | 0.85    | 43.67 |   Maintain Below   |
-#
-#
+## Transforms KPI matrix into format for FME/Open Performance upload
+#### Conor Gaffney and Vic Spencer, 2015
+
+#### Desired output format:
+
+#### | IndicatorID | StrategyID | Organization     | Name                  | Type  | RowID | Date       | Year | Quarter | DateLabel | Total | Percent |  YTD  | Action_Aggregation |
+#### | ----------- | ---------- | ---------------- | --------------------- | ----- | ----- | ---------- | ---- | ------- | --------- | ----- | ------- | ----- | ------------------ |
+#### | 602         | 40201      | Code Enforcement | Number of Inspections | Count | 1     | mm/dd/yyyy | 2011 | 1       | 2011, Q1  | 7030  | 0.85    | 43.67 |   Maintain Below   |
+####
+####
 
 .libPaths("C:\\Rpackages")
 library(gdata)
@@ -18,7 +17,7 @@ library(dplyr)
 kpi <- read.xls("O:/Projects/ResultsNOLA/2015/2015 KPI Matrix MASTER.xlsx", header = TRUE, sheet = "Measures", na.strings = c("", "#N/A", "NA", "N/A", "-", " -", "- ", " - ", "#DIV/0!", "REF!"), strip.white = TRUE, perl = "C:/Strawberry/perl/bin/perl.exe")
 historic <- read.xls("O:/Projects/ResultsNOLA/2015/2015 KPI Matrix MASTER.xlsx", header = TRUE, sheet = "Seasonality-Historic\ Data", na.strings = c("", "#N/A", "NA", "N/A", "-", " -", "- ", " - ", "#DIV/0!", "REF!"), strip.white = TRUE, perl = "C:/Strawberry/perl/bin/perl.exe")
 
-## This handles the 2015 sheet
+#### This handles the 2015 sheet
 
 current <- data.frame(IndicatorID  = gsub("-", "0", kpi$Index),
                       StrategyID   = gsub(".", "0", kpi$X2015.Strategic.Alignment, fixed = TRUE),
@@ -63,10 +62,10 @@ for(i in 1:nrow(current)) {
   current$Year[i] <- y
   current$Quarter[i] <- gsub("Q", "", q)
   current$DateLabel[i] <- paste(y, q, sep = ", ")
-  
+
   if( grepl("percent", tolower(current$Type[i])) ) {
     current$Percent[i] <- current$value[i]
-  } else if(grepl("percent of", tolower(current$Name[i]))) { 
+  } else if(grepl("percent of", tolower(current$Name[i]))) {
     current$Percent[i] <- current$value[i]
   } else if (grepl("rate of", tolower(current$Name[i]))){
     current$Percent[i] <- current$value[i]
@@ -75,11 +74,7 @@ for(i in 1:nrow(current)) {
   }
 }
 
-# clear
-# current$variable <- NULL
-# current$value <- NULL
-
-## This handles the historic data sheet
+#### This handles the historic data sheet
 
 past <- data.frame(IndicatorID  = gsub("-", "0", historic$Index),
                    StrategyID   = gsub(".", "0", historic$X2015.Strategic.Alignment, fixed = TRUE),
@@ -123,7 +118,7 @@ past$Percent <- NA
 for(i in 1:nrow(past)) {
   q <- strsplit(past$variable[i], "_")[[1]][2]
   y <- gsub("X", "", strsplit(past$variable[i], "_")[[1]][1])
-  
+
   if(q == "Q1") {
     past$Date[i] <- paste(y, "03-31", sep = "-")
   } else if (q == "Q2") {
@@ -135,14 +130,14 @@ for(i in 1:nrow(past)) {
   } else {
     NA
   }
-  
+
   past$Year[i] <- y
   past$Quarter[i] <- gsub("Q", "", q)
   past$DateLabel[i] <- paste(y, q, sep = ", ")
-  
+
   if( grepl("percent", tolower(past$Type[i])) ) {
     past$Percent[i] <- past$value[i]
-  } else if(grepl("percent of", tolower(past$Name[i]))) { 
+  } else if(grepl("percent of", tolower(past$Name[i]))) {
     past$Percent[i] <- past$value[i]
   } else if (grepl("rate of", tolower(past$Name[i]))){
     past$Percent[i] <- past$value[i]
@@ -151,20 +146,17 @@ for(i in 1:nrow(past)) {
   }
 }
 
-# past$variable <- NULL
-# past$value <- NULL
-
-# combine current year and historical years into one data frame
+#### Combine current year and historical years into one data frame
 output <- rbind(current, past)
 
 
-# Strip dollar sign out of YTD columns
+#### Strip dollar sign out of YTD columns
 output$Q1_YTD<-gsub('\\$', '', output$Q1_YTD)
 output$Q2_YTD<-gsub('\\$', '', output$Q2_YTD)
 output$Q3_YTD<-gsub('\\$', '', output$Q3_YTD)
 
 
-# Convert relevant columns to numeric
+#### Convert relevant columns to numeric
 class(output$Total)<-"numeric"
 class(output$value)<-"numeric"
 class(output$Percent)<-"numeric"
@@ -172,57 +164,40 @@ class(output$Q1_YTD)<-"numeric"
 class(output$Q2_YTD)<-"numeric"
 class(output$Q3_YTD)<-"numeric"
 
-# Multiply Percent column by 100 to make it readable on OpenGov site, then incorporate new percent values into value column
+#### Multiply Percent column by 100 to make it readable on OpenGov site, then incorporate new percent values into value column
 output$Percent<-round(output$Percent*100,1)
 output$value<-ifelse(!is.na(output$Percent),output$Percent,output$value)
 
-# Concatenate Name and Date columns to replace RowID column
+#### Concatenate Name and Date columns to replace RowID column
 output$RowID<-paste(output$Name,output$Date,sep="_")
 
-# Re-code YTD column, based on YTD per quarter
-#output$YTDTotal<-for(i in 1:nrow(output)) {
-# q <- output$Quarter[i]
-# YTD <- output$2015
-# if(q == "1") {
-#   current$Date[i] <- paste(y, "03-31", sep = "-")
-# } else if (q == "2") {
-#   current$Date[i] <- paste(y, "06-30", sep = "-")
-# } else if (q == "3") {
-#   current$Date[i] <- paste(y, "09-30", sep = "-")
-# } else if (q == "4") {
-#  current$Date[i] <- paste(y, "12-31", sep = "-")
-# } else {
-# NA
-# }
-
-# Create YTD variable to enable goal tile creation for current year
+#### Create YTD variable to enable goal tile creation for current year
 output$YTD<-ifelse(output$Quarter=="1" & output$Year=="2015",output$Q1_YTD,
                    ifelse(output$Quarter=="2" & output$Year=="2015",output$Q2_YTD,
                           ifelse(output$variable=="Q3" & output$Year=="2015",output$Q3_YTD,NA)))
 
 
-## Code YTD percents by 100
+#### Code YTD percents by 100
 output$YTD<-ifelse(!is.na(output$Percent) & output$Year=="2015",output$Percent,output$YTD)
 
-## Add Quarter_Label variable
+#### Add Quarter_Label variable
 output$Quarter_Label<-ifelse(output$Quarter=="1","Q1",
                                 ifelse(output$Quarter=="2","Q2",
                                   ifelse(output$Quarter=="3","Q3",
                                     ifelse(output$Quarter=="4","Q4",NA))))
 
-# Remove variable column, as well as any rows without a data point.
+#### Remove variable column, as well as any rows without a data point.
 output<-select(output,-variable)%>%
   filter(!is.na(value))
 
-# Create "Action-Aggregation" variable to categorize measures into the appropriate "action" and "aggregation" needed for formatting data for Socrata dashboard
+#### Create "Action-Aggregation" variable to categorize measures into the appropriate "action" and "aggregation" needed for formatting data for Socrata dashboard
 output$Action_Aggregation<-ifelse(output$Type=="Average" & output$Direction=="Under"|output$Type=="Average Percent" & output$Direction=="Under"|output$Type=="Count" & output$Direction=="Under"|output$Type=="Last" & output$Direction=="Under","Maintain Below",
                                   ifelse(output$Type=="Count" & output$Direction=="Over"|output$Type=="Last" & output$Direction=="Over","Increase to",
                                          ifelse(output$Type=="Average" & output$Direction=="Over"|output$Type=="Average Percent" & output$Direction=="Over","Maintain Above","Measure")))
 output$Action_Aggregation<-ifelse(is.na(output$Action_Aggregation),"Measure",output$Action_Aggregation)  ## This codes "Establishing Baseline" or "Management Statistic" measures as "Measure," which the above ifelse does not.
 
-## Remove unnecessary columns
+#### Remove unnecessary columns
 output<-select(output,-Q1_YTD,-Q2_YTD,-Q3_YTD)
 
-# save
+#### Save
 write.csv(output, file = "O:/Projects/ResultsNOLA/2015/kpi-matrix-transformed.csv", row.names = FALSE)
-
