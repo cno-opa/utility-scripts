@@ -66,10 +66,13 @@ for(i in 1:nrow(current)) {
   
   if( grepl("percent", tolower(current$Type[i])) ) {
     current$Percent[i] <- current$value[i]
+  } else if(grepl("percent of", tolower(current$Name[i]))) { 
+    current$Percent[i] <- current$value[i]
+  } else if (grepl("rate of", tolower(current$Name[i]))){
+    current$Percent[i] <- current$value[i]
   } else {
     current$Total[i] <- current$value[i]
   }
-}
 
 
 # clear
@@ -137,7 +140,11 @@ for(i in 1:nrow(past)) {
   past$Quarter[i] <- gsub("Q", "", q)
   past$DateLabel[i] <- paste(y, q, sep = ", ")
   
-  if( grepl("percent", tolower(past$Name[i])) | grepl("rate", tolower(past$Name[i])) ) {
+  if( grepl("percent", tolower(past$Type[i])) ) {
+    past$Percent[i] <- past$value[i]
+  } else if(grepl("percent of", tolower(past$Name[i]))) { 
+    past$Percent[i] <- past$value[i]
+  } else if (grepl("rate of", tolower(past$Name[i]))){
     past$Percent[i] <- past$value[i]
   } else {
     past$Total[i] <- past$value[i]
@@ -149,7 +156,7 @@ for(i in 1:nrow(past)) {
 
 # combine current year and historical years into one data frame
 output <- rbind(current, past)
-##output<-inner_join(current,past,by="IndicatorID")
+
 
 # Strip dollar sign out of YTD columns
 output$Q1_YTD<-gsub('\\$', '', output$Q1_YTD)
@@ -195,7 +202,7 @@ output$YTD<-ifelse(output$Quarter=="1" & output$Year=="2015",output$Q1_YTD,
 
 
 ## Code YTD percents by 100
-output$YTD<-ifelse(!is.na(output$Percent),output$Percent,output$YTD)
+output$YTD<-ifelse(!is.na(output$Percent) & output$Year=="2015",output$Percent,output$YTD)
 
 ## Add Quarter_Label variable
 output$Quarter_Label<-ifelse(output$Quarter=="1","Q1",
