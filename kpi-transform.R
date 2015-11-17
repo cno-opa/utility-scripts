@@ -73,7 +73,7 @@ for(i in 1:nrow(current)) {
   } else {
     current$Total[i] <- current$value[i]
   }
-
+}
 
 # clear
 # current$variable <- NULL
