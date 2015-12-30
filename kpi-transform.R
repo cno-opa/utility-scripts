@@ -30,7 +30,7 @@ current <- data.frame(IndicatorID  = gsub("-", "0", kpi$Index),
                       Q4           = kpi$Q4.Total,
                       Q1_YTD       = kpi$Q1.YTD,
                       Q2_YTD       = kpi$Q2.YTD,
-                      Q3_YTD       = kpi$YTD.Actual,
+                      Q3_YTD       = kpi$Q3.YTD,
                       Target       = kpi$X2015.Target,
                       Seasonality  = kpi$Seasonality,
                       Direction    = kpi$Direction)
@@ -100,7 +100,7 @@ past <- data.frame(IndicatorID  = gsub("-", "0", historic$Index),
                    Target       = historic$X2015.Target,
                    Q1_YTD       = historic$Q1.YTD,
                    Q2_YTD       = historic$Q2.YTD,
-                   Q3_YTD       = historic$YTD.Actual,
+                   Q3_YTD       = historic$Q3.YTD,
                    Seasonality  = historic$Seasonality,
                    Direction    = historic$Direction)
 
@@ -168,6 +168,7 @@ class(output$Q3_YTD)<-"numeric"
 output$Percent<-round(output$Percent*100,1)
 output$value<-ifelse(!is.na(output$Percent),output$Percent,output$value)
 
+
 #### Concatenate Name and Date columns to replace RowID column
 output$RowID<-paste(output$Name,output$Date,sep="_")
 
@@ -180,6 +181,10 @@ output$YTD<-ifelse(output$Quarter=="1" & output$Year=="2015",output$Q1_YTD,
 #### Code YTD percents by 100
 output$YTD<-ifelse(!is.na(output$Percent) & output$Year=="2015",output$Percent,output$YTD)
 
+####
+output$YTD<-ifelse(output$Type=="Last" & !is.na(output$value) & is.na(output$YTD),output$value,output$YTD)
+
+
 #### Add Quarter_Label variable
 output$Quarter_Label<-ifelse(output$Quarter=="1","Q1",
                                 ifelse(output$Quarter=="2","Q2",
@@ -191,9 +196,9 @@ output<-select(output,-variable)%>%
   filter(!is.na(value))
 
 #### Create "Action-Aggregation" variable to categorize measures into the appropriate "action" and "aggregation" needed for formatting data for Socrata dashboard
-output$Action_Aggregation<-ifelse(output$Type=="Average" & output$Direction=="Under"|output$Type=="Average Percent" & output$Direction=="Under"|output$Type=="Count" & output$Direction=="Under"|output$Type=="Last" & output$Direction=="Under","Maintain Below",
+output$Action_Aggregation<-ifelse(output$Type=="Average" & output$Direction=="Under"|output$Type=="Average Percent" & output$Direction=="Under"|output$Type=="Count" & output$Direction=="Under"|output$Type=="Last" & output$Direction=="Under"|output$Type=="Once" & output$Direction=="Under","Maintain Below",
                                   ifelse(output$Type=="Count" & output$Direction=="Over"|output$Type=="Last" & output$Direction=="Over","Increase to",
-                                         ifelse(output$Type=="Average" & output$Direction=="Over"|output$Type=="Average Percent" & output$Direction=="Over","Maintain Above","Measure")))
+                                         ifelse(output$Type=="Average" & output$Direction=="Over"|output$Type=="Average Percent" & output$Direction=="Over"|output$Type=="Once" & output$Direction=="Over","Maintain Above","Measure")))
 output$Action_Aggregation<-ifelse(is.na(output$Action_Aggregation),"Measure",output$Action_Aggregation)  ## This codes "Establishing Baseline" or "Management Statistic" measures as "Measure," which the above ifelse does not.
 
 #### Remove unnecessary columns
