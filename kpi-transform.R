@@ -179,11 +179,10 @@ output$YTD<-ifelse(output$Quarter=="1" & output$Year=="2015",output$Q1_YTD,
 
 
 #### Code YTD percents by 100
-output$YTD<-ifelse(!is.na(output$Percent) & output$Year=="2015",output$Percent,output$YTD)
+output$YTD<-ifelse(!is.na(output$Percent) & output$Year=="2015",output$YTD*100,output$YTD)
 
 ####
 output$YTD<-ifelse(output$Type=="Last" & !is.na(output$value) & is.na(output$YTD),output$value,output$YTD)
-
 
 #### Add Quarter_Label variable
 output$Quarter_Label<-ifelse(output$Quarter=="1","Q1",
