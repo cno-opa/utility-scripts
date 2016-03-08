@@ -1,4 +1,4 @@
-## Transforms KPI matrix into format for FME/Open Performance upload
+#### Transforms KPI matrix into format for FME/Open Performance upload
 #### Conor Gaffney and Vic Spencer, 2015
 
 #### Desired output format:
@@ -31,11 +31,13 @@ current <- data.frame(IndicatorID  = gsub("-", "0", kpi$Index),
                       Q1_YTD       = kpi$Q1.YTD,
                       Q2_YTD       = kpi$Q2.YTD,
                       Q3_YTD       = kpi$Q3.YTD,
+                      Q4_YTD       = kpi$YTD.Actual,
                       Target       = kpi$X2015.Target,
                       Seasonality  = kpi$Seasonality,
-                      Direction    = kpi$Direction)
+                      Direction    = kpi$Direction,
+                      Note         = kpi$Quarterly.Note)
 
-current <-melt(current, id.vars = c("IndicatorID", "StrategyID", "Organization", "Name", "Type","Q1_YTD","Q2_YTD","Q3_YTD","Target","Seasonality","Direction"))
+current <-melt(current, id.vars = c("IndicatorID", "StrategyID", "Organization", "Name", "Type","Q1_YTD","Q2_YTD","Q3_YTD","Q4_YTD","Target","Seasonality","Direction","Note"))
 
 current$RowID <- row.names(current)
 current$Date <- NA
@@ -101,10 +103,12 @@ past <- data.frame(IndicatorID  = gsub("-", "0", historic$Index),
                    Q1_YTD       = historic$Q1.YTD,
                    Q2_YTD       = historic$Q2.YTD,
                    Q3_YTD       = historic$Q3.YTD,
+                   Q4_YTD       = NA,
                    Seasonality  = historic$Seasonality,
-                   Direction    = historic$Direction)
+                   Direction    = historic$Direction,
+                   Note         = NA)
 
-past <-melt(past, id.vars = c("IndicatorID", "StrategyID", "Organization", "Name", "Type","Q1_YTD","Q2_YTD","Q3_YTD","Target","Seasonality","Direction"))
+past <-melt(past, id.vars = c("IndicatorID", "StrategyID", "Organization", "Name", "Type","Q1_YTD","Q2_YTD","Q3_YTD","Q4_YTD","Target","Seasonality","Direction","Note"))
 
 past$RowID <- row.names(past)
 past$variable <- as.character(past$variable)
@@ -149,12 +153,11 @@ for(i in 1:nrow(past)) {
 #### Combine current year and historical years into one data frame
 output <- rbind(current, past)
 
-
 #### Strip dollar sign out of YTD columns
 output$Q1_YTD<-gsub('\\$', '', output$Q1_YTD)
 output$Q2_YTD<-gsub('\\$', '', output$Q2_YTD)
 output$Q3_YTD<-gsub('\\$', '', output$Q3_YTD)
-
+output$Q4_YTD<-gsub('\\$', '', output$Q4_YTD)
 
 #### Convert relevant columns to numeric
 class(output$Total)<-"numeric"
@@ -163,6 +166,7 @@ class(output$Percent)<-"numeric"
 class(output$Q1_YTD)<-"numeric"
 class(output$Q2_YTD)<-"numeric"
 class(output$Q3_YTD)<-"numeric"
+class(output$Q4_YTD)<-"numeric"
 
 #### Multiply Percent column by 100 to make it readable on OpenGov site, then incorporate new percent values into value column
 output$Percent<-round(output$Percent*100,1)
@@ -175,8 +179,8 @@ output$RowID<-paste(output$Name,output$Date,sep="_")
 #### Create YTD variable to enable goal tile creation for current year
 output$YTD<-ifelse(output$Quarter=="1" & output$Year=="2015",output$Q1_YTD,
                    ifelse(output$Quarter=="2" & output$Year=="2015",output$Q2_YTD,
-                          ifelse(output$variable=="Q3" & output$Year=="2015",output$Q3_YTD,NA)))
-
+                          ifelse(output$variable=="Q3" & output$Year=="2015",output$Q3_YTD,
+                                 ifelse(output$Quarter=="4" & output$Year=="2015",output$Q4_YTD,NA))))
 
 #### Code YTD percents by 100
 output$YTD<-ifelse(!is.na(output$Percent) & output$Year=="2015",output$YTD*100,output$YTD)
@@ -201,7 +205,19 @@ output$Action_Aggregation<-ifelse(output$Type=="Average" & output$Direction=="Un
 output$Action_Aggregation<-ifelse(is.na(output$Action_Aggregation),"Measure",output$Action_Aggregation)  ## This codes "Establishing Baseline" or "Management Statistic" measures as "Measure," which the above ifelse does not.
 
 #### Remove unnecessary columns
-output<-select(output,-Q1_YTD,-Q2_YTD,-Q3_YTD)
+output<-select(output,-Q1_YTD,-Q2_YTD,-Q3_YTD,-Q4_YTD)
+
+#### Move "Note" column to last column of data frame
+movetolast <- function(data, move) {
+  data[c(setdiff(names(data), move), move)]
+}
+
+output<-movetolast(output, c("Note"))
+
+####
+output$Total[is.na(output$Total)]<-""
+output$Percent[is.na(output$Percent)]<-""
+output$YTD[is.na(output$YTD)]<-""
 
 #### Save
 write.csv(output, file = "O:/Projects/ResultsNOLA/2015/kpi-matrix-transformed.csv", row.names = FALSE)
